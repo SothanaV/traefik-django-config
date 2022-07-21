@@ -52,5 +52,5 @@ watch = true
 exposedbydefault = false
 
 [file]
-  directory = "/config_rule/"
+  directory = "/config-rules/"
   watch = true

@@ -1,0 +1,19 @@
+#####
+# {{ service_domain}}
+#####
+
+[frontends]
+  [frontends.{{ service_name }}-front]
+  backend = "{{ service_name }}-back"
+  {% if passhostheader %} passHostHeader = true {% endif %}
+    [frontends.{{ service_name }}-front.routes.{{ service_name }}-hostroute]
+    rule = "Host: {{ domain }}"
+    [frontends.{{ service_name }}-front.routes.{{ service_name }}-pathroute]
+    rule = "PathPrefixStrip:{{ path_prefix }}"
+
+
+[backends]
+  [backends.{{ service_name }}-back]
+    [backends.{{ service_name }}-back.servers.host1]
+    url = {{ service_url }}
+
