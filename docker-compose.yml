@@ -1,0 +1,27 @@
+version: '3'
+networks:
+  traefik:
+    external:
+      name: traefik
+
+services:
+  proxy:
+    image: traefik:1.7-alpine # The official Traefik docker image
+    command: --docker
+    networks:
+      - traefik
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      -  "./traefik.toml:/traefik.toml"
+      -  "./acme.json:/acme.json"
+      -  "./config_rule:/config_rule"
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    labels:
+      - "traefik.frontend.rule=Host:traefik.data.storemesh.com"
+      - "traefik.port=8080"
+      - "traefik.backend=traefik"
+      - "traefik.frontend.entryPoints=http,https"
+
