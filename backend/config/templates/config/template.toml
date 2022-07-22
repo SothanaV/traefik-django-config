@@ -15,5 +15,5 @@
 [backends]
   [backends.{{ service_name }}-back]
     [backends.{{ service_name }}-back.servers.host1]
-    url = {{ service_url }}
+    url = "{{ service_url }}"
 
