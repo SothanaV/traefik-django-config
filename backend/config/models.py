@@ -15,3 +15,4 @@ class Service(models.Model):
     path_prefix = models.CharField(max_length=100, help_text="path prefix eg, /static',/media/ or / ", default="/")
     pass_host_header = models.BooleanField(default=True)
     url = models.URLField(help_text="url for route to, eg http://192.168.24.206:8000")
+    is_use = models.BooleanField(default=True)
