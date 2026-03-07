@@ -11,6 +11,8 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = [f.name for f in Project._meta.fields]
     list_editable = ['is_use']
     actions = ['create_config', 'delete_config']
+    search_fields = ['name']
+    list_filter = ['is_use']
     
     def get_queryset(self, request):
         return super().get_queryset(request).order_by('-is_use')
@@ -19,45 +21,40 @@ class ProjectAdmin(admin.ModelAdmin):
     def create_config(self, request, queryset):
         for project in queryset.filter(is_use=True):
             config_path = os.path.join(dir_config, f"{project.name}.yaml")
-            config = ""
-            for service in Service.objects.filter(project=project, is_use=True):
-                context = {
-                    'service_domain': service.domain,
-                    'service_name': f"{service.project.name}-{service.name}",
-                    'passhostheader': service.pass_host_header,
-                    'service_url': service.url,
-                    'path_prefix': service.path_prefix,
-                    'domain': service.domain
+            
+            # Initialize as dictionaries, not lists
+            data = {
+                'http': {
+                    'services': {}, 
+                    'routers': {}
                 }
-                # config += render_to_string('config/template.toml', context=context)
-                data = {
-                    'http':{
-                        'services':{
-                            f'{service.project.name}-{service.name}-backs':{
-                                'loadBalancer':{
-                                    'servers':[
-                                        {'url': f'{service.url}'}
-                                    ]
-                                }
-                            }
-                        },
-                        'routers': {
-                            f'{service.project.name}-{service.name}':{
-                                'rule': f'Host(`{service.domain}`)',
-                                'service': f'{service.project.name}-{service.name}-backs',
-                                'entryPoints':[
-                                    'web',
-                                    'websecure'
-                                ],
-                                'tls':{
-                                    'certResolver': 'myresolver'
-                                }
-                            }
-                        }
+            }
+            
+            for service in Service.objects.filter(project=project, is_use=True):
+                service_id = f"{service.project.name}-{service.name}"
+                service_back_id = f"{service_id}-backs"
+                
+                # Assign directly to the dictionary key
+                data['http']['services'][service_back_id] = {
+                    'loadBalancer': {
+                        'servers': [
+                            {'url': f'{service.url}'}
+                        ]
                     }
                 }
+                
+                # Assign directly to the dictionary key
+                data['http']['routers'][service_id] = {
+                    'rule': f'Host(`{service.domain}`)',
+                    'service': service_back_id,
+                    'entryPoints': ['web', 'websecure'],
+                    'tls': {
+                        'certResolver': 'myresolver'
+                    }
+                }
+                
             with open(config_path, 'w') as f:
-                # f.write(config)
+                # yaml.dump will now produce the correct key: value mapping
                 f.write(yaml.dump(data=data, default_flow_style=False))
                 
     @admin.action(description='delete config')
