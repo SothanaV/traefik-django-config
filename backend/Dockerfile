@@ -1,7 +1,7 @@
 FROM python:3.8-slim
 RUN apt-get update --fix-missing
 
-RUN apt install -y git netcat
+RUN apt install -y git netcat-traditional curl iputils-ping gcc g++ dnsutils
 
 WORKDIR /backend
 ADD ./requirements.txt requirements.txt

@@ -1,33 +1,33 @@
 version: '3'
 networks:
     traefik:
-        external:
-            name: traefik
+        external: true
+    internal:
+        external: false
 
 services:
-    # proxy:
-    #     image: traefik:1.7-alpine # The official Traefik docker image
-    #     command: --docker
-    #     restart: always
-    #     networks:
-    #         - traefik
-    #     ports:
-    #         - "80:80"
-    #         - "443:443"
-    #     volumes:
-    #         -  "./traefik.toml:/traefik.toml"
-    #         -  "./acme.json:/acme.json"
-    #         -  "./config-rules:/config-rules"
-    #         - /var/run/docker.sock:/var/run/docker.sock
-    #     labels:
-    #         - "traefik.frontend.rule=Host:traefik.data.storemesh.com"
-    #         - "traefik.port=8080"
-    #         - "traefik.backend=traefik"
-    #         - "traefik.frontend.entryPoints=http,https"
+    proxy:
+        image: traefik:v3.6
+        container_name: traefik
+        restart: always
+        ports:
+            - "80:80"
+            - "443:443"
+        networks:
+            - traefik
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - ./traefik.yml:/etc/traefik/traefik.yml:ro
+            - ./acme.json:/acme.json
+            - ./config-rules:/rules
+        environment:
+            - TZ=UTC
 
     db:
         container_name: ${PROJECT_NAME}-db
         image: postgres:11.3-alpine
+        networks:
+            - internal
         env_file:
             - .env
 
@@ -38,6 +38,8 @@ services:
         volumes: 
             - ./backend:/backend
             - "./config-rules:/config-rules"
+        networks:
+            - internal
         ports: 
             - 8000:8000
         env_file: 

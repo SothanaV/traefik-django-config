@@ -1,7 +1,8 @@
 import os
 from django.contrib import admin
 from .models import Project, Service
-from django.template.loader import render_to_string
+# from django.template.loader import render_to_string
+import yaml
 # Register your models here.
 
 dir_config = os.path.join('/', 'config-rules')
@@ -17,7 +18,7 @@ class ProjectAdmin(admin.ModelAdmin):
     @admin.action(description='create config')
     def create_config(self, request, queryset):
         for project in queryset.filter(is_use=True):
-            config_path = os.path.join(dir_config, f"{project.name}.toml")
+            config_path = os.path.join(dir_config, f"{project.name}.yaml")
             config = ""
             for service in Service.objects.filter(project=project, is_use=True):
                 context = {
@@ -28,9 +29,36 @@ class ProjectAdmin(admin.ModelAdmin):
                     'path_prefix': service.path_prefix,
                     'domain': service.domain
                 }
-                config += render_to_string('config/template.toml', context=context)
+                # config += render_to_string('config/template.toml', context=context)
+                data = {
+                    'http':{
+                        'services':{
+                            f'{service.project.name}-{service.name}-backs':{
+                                'loadBalancer':{
+                                    'servers':[
+                                        {'url': f'{service.url}'}
+                                    ]
+                                }
+                            }
+                        },
+                        'routers': {
+                            f'{service.project.name}-{service.name}':{
+                                'rule': f'Host(`{service.domain}`)',
+                                'service': f'{service.project.name}-{service.name}-backs',
+                                'entryPoints':[
+                                    'web',
+                                    'websecure'
+                                ],
+                                'tls':{
+                                    'certResolver': 'myresolver'
+                                }
+                            }
+                        }
+                    }
+                }
             with open(config_path, 'w') as f:
-                f.write(config)
+                # f.write(config)
+                f.write(yaml.dump(data=data, default_flow_style=False))
                 
     @admin.action(description='delete config')
     def delete_config(self, request, queryset):
