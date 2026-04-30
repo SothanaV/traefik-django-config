@@ -19,7 +19,7 @@ certificatesResolvers:
   myresolver:
     acme:
       email: sothana@storemesh.com
-      storage: acme.json
+      storage: /secret/acme.json
       # Use the HTTP challenge
       #httpChallenge:
       #  entryPoint: web
